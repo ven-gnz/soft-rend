@@ -7,7 +7,7 @@
 # own additions
 *.sln
 *.dll
-*.vxcproj*
+*.vcxproj*
 
 x64/*
 
