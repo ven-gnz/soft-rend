@@ -3,6 +3,13 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+
+# own additions
+*.sln
+*.dll
+*.vxcproj*
+
+
 # User-specific files
 *.rsuser
 *.suo
