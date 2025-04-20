@@ -9,6 +9,8 @@
 *.dll
 *.vxcproj*
 
+x64/*
+
 
 # User-specific files
 *.rsuser
