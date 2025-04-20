@@ -1,0 +1,1 @@
+Simple SDL and C software renderer. Following pikuma.com computer graphics tutorial.
