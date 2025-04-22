@@ -5,10 +5,12 @@
 #include <SDL.h>
 #include <stdio.h>
 
+#define FPS 30
+#define FRAME_TARGET_TIME (1000/ FPS)
+
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
 extern SDL_Texture* color_buffer_texture;
-
 
 extern uint32_t* color_buffer;
 extern bool is_fullscreen;

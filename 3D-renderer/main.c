@@ -8,6 +8,7 @@
 
 
 bool is_running = false;
+int previous_frame_time = 0;
 float fov_factor = 400; //debug
 
 vec3_t camera_position = { .x = 0,.y = 0, .z = -5 };
@@ -81,6 +82,9 @@ vec2_t project(vec3_t point) {
 
 
 void update(void) {
+
+    while (!SDL_TICKS_PASSED(SDL_GetTicks(), previous_frame_time + FRAME_TARGET_TIME));
+    
     cube_rotation.y += 0.001;
     cube_rotation.z += 0.01;
 
