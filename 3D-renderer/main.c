@@ -30,8 +30,6 @@ void setup(void) {
         window_width,
         window_height
     );
-
-
    
 }
 
@@ -52,14 +50,7 @@ void process_input(void) {
     }
 }
 
-vec2_t ortho_project(vec3_t point) {
-    vec2_t projected_point =
-    {
-        .x = point.x,
-        .y = point.y
-    };
-     return projected_point;
-}
+
 
 vec2_t project(vec3_t point) {
 
