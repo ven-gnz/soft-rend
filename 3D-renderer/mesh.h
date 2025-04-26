@@ -10,11 +10,14 @@ extern face_t cube_faces[N_CUBE_FACES];
 
 void load_cube_mesh(void);
 
+void load_obj_mesh(char* filename);
+
 typedef struct {
 	vec3_t* vertices;
 	face_t* faces;
 	vec3_t rotation;
 } mesh_t;
+
 
 
 extern mesh_t mesh; 

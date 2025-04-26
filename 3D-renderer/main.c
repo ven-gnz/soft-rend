@@ -6,6 +6,8 @@
 #include "vector.h"
 #include "mesh.h"
 #include "array.h"
+#include <SDL_filesystem.h>
+#define _CRT_SECURE_NO_WARNINGS 1
 
 
 bool is_running = false;
@@ -21,7 +23,7 @@ vec3_t camera_position = { .x = 0,.y = 0, .z = -5 };
 
 void setup(void) {
 
-    load_cube_mesh();
+    load_obj_mesh("f22.obj");
 
     color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 
@@ -143,8 +145,11 @@ void free_res(void) {
 }
 
 
-int main(int argc, char **argv) {
 
+
+int main(int argc, char **argv) {
+    
+  
     is_running = initialize_window();
     setup();
 
