@@ -34,6 +34,11 @@ void setup(void) {
         window_width,
         window_height
     );
+    vec3_t a = { 2.5, 6.4, 3.0 };
+    vec3_t b = { -2.2, 1.4, -1.0 };
+
+    float lena = vec3_length(a);
+    float ble = vec3_length(b);
    
 }
 

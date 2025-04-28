@@ -1,6 +1,86 @@
 #include "vector.h"
 #include <math.h>
 
+float vec2_length(vec2_t v)
+{
+	return sqrt(v.x * v.x + v.y + v.y);
+}
+
+float vec3_length(vec3_t v)
+{
+	return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+vec2_t vec2_add(vec2_t a, vec2_t b) {
+	vec2_t result = {
+		.x = a.x + b.x,
+		.y = a.y + b.y
+	};
+	return result;
+}
+
+vec2_t vec2_subtract(vec2_t a, vec2_t b) {
+	vec2_t result = {
+		.x = a.x - b.x,
+		.y = a.y - b.y
+	};
+	return result;
+}
+
+vec3_t vec3_add(vec3_t a, vec3_t b)
+{
+	vec3_t result =
+	{
+		.x = a.x + b.x,
+		.y = a.y + b.y,
+		.z = a.z + b.z
+	};
+	return result;
+}
+
+vec3_t vec3_subtract(vec3_t a, vec3_t b)
+{
+	vec3_t result =
+	{
+		.x = a.x - b.x,
+		.y = a.y - b.y,
+		.z = a.z - b.z
+	};
+	return result;
+}
+
+vec2_t vec2_scalar(vec2_t a, float s) {
+	vec2_t result = { .x = a.x * s,
+	.y = a.y * s };
+	return result;
+}
+
+vec3_t vec3_scalar(vec3_t a, float s) {
+	vec3_t result = { .x = a.x * s,
+	.y = a.y * s,
+	.z = a.z * s};
+	return result;
+}
+
+vec2_t vec2_div(vec2_t v, float f)
+{
+	vec2_t result = {
+		.x = v.x / f,
+		.y = v.y / f
+	};
+	return result;
+}
+
+vec3_t vec3_div(vec3_t v, float f)
+{
+	vec3_t result = {
+		.x = v.x / f,
+		.y = v.y / f,
+		.z = v.z / f
+	};
+	return result;
+}
+
 vec3_t vec3_rotate_x(vec3_t v, float angle) {
 	vec3_t rotated_vector = {
 		.x = v.x,
@@ -28,3 +108,8 @@ vec3_t vec3_rotate_z(vec3_t v, float angle) {
 	return rotated_v;
 
 }
+
+
+
+
+
