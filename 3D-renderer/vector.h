@@ -24,4 +24,7 @@ vec3_t vec3_subtract(vec3_t a, vec3_t b);
 vec2_t vec2_scalar(vec2_t, float s);
 vec3_t vec3_scalar(vec3_t, float s);
 vec2_t vec2_div(vec2_t v, float f);
-vec3_t vec3_div(vec3_t v, float f)
+vec3_t vec3_div(vec3_t v, float f);
+vec3_t cross(vec3_t a, vec3_t b);
+float vec3_dot(vec3_t a, vec3_t b);
+float vec2_dot(vec2_t a, vec2_t b);

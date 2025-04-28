@@ -17,7 +17,9 @@ float fov_factor = 400;
 
 triangle_t* triangles_to_render = NULL;
 
-vec3_t camera_position = { .x = 0,.y = 0, .z = -5 };
+vec3_t camera_position = { .x = 0,.y = 0, .z = 0 };
+
+const float Z_COORD_OFFSET_DEFAULT = -5;
 
 
 
@@ -92,29 +94,63 @@ void update(void) {
         triangle_t projected_triangle;
         face_t mesh_face = mesh.faces[i];
         vec3_t face_vertices[3];
+
+        
         face_vertices[0] = mesh.vertices[mesh_face.a - 1];
         face_vertices[1] = mesh.vertices[mesh_face.b - 1];
         face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
+        vec3_t transformed_vertices[3];
+        // transforming vertices
         for (int j = 0; j < 3; j++) {
             vec3_t transformed_vertex = face_vertices[j];
             transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
             transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
 
-            transformed_vertex.z -= camera_position.z;
+            transformed_vertex.z += Z_COORD_OFFSET_DEFAULT;
 
-            vec2_t projected_point = project(transformed_vertex);
+            transformed_vertices[j] = transformed_vertex;
+
+        }
+        //culling faces
+        vec3_t vector_a = transformed_vertices[0]; /*   A    */
+        vec3_t vector_b = transformed_vertices[1]; /*  / \   */
+        vec3_t vector_c = transformed_vertices[2]; /* C---B  */
+
+        vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
+        vec3_t vector_ac = vec3_subtract(vector_c, vector_a);
+
+        vec3_t normal = cross(vector_ab, vector_ac); // LEFT HANDED COORDINATE SYSTEM
+        vec3_t camera_ray = vec3_subtract(camera_position, vector_a);
+
+        float dot_cam = vec3_dot(camera_ray, normal);
+      
+        if (dot_cam < 0) {
+            continue;
+        }
+
+
+        //projecting faces
+        for (int j = 0; j < 3; j++) {
+
+            vec2_t projected_point = project(transformed_vertices[j]);
 
             // scale and translate projected point towards middle of screen
             projected_point.x += (window_width / 2);
             projected_point.y += (window_height / 2);
 
             projected_triangle.points[j] = projected_point;
+
+
         }
         array_push(triangles_to_render, projected_triangle);
+            
+        }
   }
 
-}
+
+
+
 
 
 void render(void) {
