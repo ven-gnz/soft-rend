@@ -27,26 +27,11 @@ vec2_t vec2_subtract(vec2_t a, vec2_t b) {
 	return result;
 }
 
-vec3_t vec3_add(vec3_t a, vec3_t b)
+void vec2_normalize(vec2_t* v)
 {
-	vec3_t result =
-	{
-		.x = a.x + b.x,
-		.y = a.y + b.y,
-		.z = a.z + b.z
-	};
-	return result;
-}
-
-vec3_t vec3_subtract(vec3_t a, vec3_t b)
-{
-	vec3_t result =
-	{
-		.x = a.x - b.x,
-		.y = a.y - b.y,
-		.z = a.z - b.z
-	};
-	return result;
+	float l = sqrt(v->x * v->x + v->y * v->y);
+	v->x /= l;
+	v->y /= l;
 }
 
 vec2_t vec2_scalar(vec2_t a, float s) {
@@ -55,12 +40,7 @@ vec2_t vec2_scalar(vec2_t a, float s) {
 	return result;
 }
 
-vec3_t vec3_scalar(vec3_t a, float s) {
-	vec3_t result = { .x = a.x * s,
-	.y = a.y * s,
-	.z = a.z * s};
-	return result;
-}
+
 
 vec2_t vec2_div(vec2_t v, float f)
 {
@@ -77,6 +57,35 @@ vec3_t vec3_div(vec3_t v, float f)
 		.x = v.x / f,
 		.y = v.y / f,
 		.z = v.z / f
+	};
+	return result;
+}
+
+vec3_t vec3_add(vec3_t a, vec3_t b)
+{
+	vec3_t result =
+	{
+		.x = a.x + b.x,
+		.y = a.y + b.y,
+		.z = a.z + b.z
+	};
+	return result;
+}
+
+vec3_t vec3_scalar(vec3_t a, float s) {
+	vec3_t result = { .x = a.x * s,
+	.y = a.y * s,
+	.z = a.z * s };
+	return result;
+}
+
+vec3_t vec3_subtract(vec3_t a, vec3_t b)
+{
+	vec3_t result =
+	{
+		.x = a.x - b.x,
+		.y = a.y - b.y,
+		.z = a.z - b.z
 	};
 	return result;
 }
@@ -100,6 +109,17 @@ float vec2_dot(vec2_t a, vec2_t b) {
 
 	return (a.x * b.x) + (a.y * b.y);
 }
+
+
+
+void vec3_normalize(vec3_t* v)
+{
+	float l = sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+	v->x /= l;
+	v->y /= l;
+	v->z /= l;
+}
+	
 
 
 
