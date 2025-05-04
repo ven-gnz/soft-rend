@@ -36,11 +36,7 @@ void setup(void) {
         window_width,
         window_height
     );
-    vec3_t a = { 2.5, 6.4, 3.0 };
-    vec3_t b = { -2.2, 1.4, -1.0 };
 
-    float lena = vec3_length(a);
-    float ble = vec3_length(b);
    
 }
 
@@ -88,7 +84,7 @@ void update(void) {
 
     previous_frame_time = SDL_GetTicks();
     mesh.rotation.y += 0.1;
-    mesh.rotation.z += 0.01;
+    mesh.rotation.z += 0.1;
     mesh.rotation.x += 0.1;
 
     for (int i = 0; i < array_length(mesh.faces); i++) {
@@ -176,15 +172,6 @@ void render(void) {
             triangle.points[2].y,
             0xFFFFFFFF
             );
-        draw_triangle(
-            triangle.points[0].x,
-            triangle.points[0].y,
-            triangle.points[1].x,
-            triangle.points[1].y,
-            triangle.points[2].x,
-            triangle.points[2].y,
-            0x00000000
-        );
 
     }
 
@@ -210,7 +197,6 @@ int main(int argc, char **argv) {
   
     is_running = initialize_window();
     setup();
-
 
     while (is_running) {
         process_input();
