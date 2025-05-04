@@ -11,8 +11,13 @@
 
 
 bool is_running = false;
+bool is_wireframe_dot = false; // 1
+bool is_wireframe = false; // 2
+bool is_triangle_fill = true; // 3
+bool is_wireframe_fill = false; // 4
+bool is_culling = true;
 int previous_frame_time = 0;
-float fov_factor = 400; 
+float fov_factor = 400;
 
 
 triangle_t* triangles_to_render = NULL;
@@ -51,10 +56,54 @@ void process_input(void) {
         is_running = false;
         break;
     case SDL_KEYDOWN:
-        if (event.key.keysym.sym == SDLK_ESCAPE)
+        if (event.key.keysym.sym == SDLK_ESCAPE) {
             is_running = false;
-        break;
+            break;
+        }
+            
+        if (event.key.keysym.sym == SDLK_c) {
+            is_culling = true;
+            printf("Culling on\n");
+            break;
+            }
+        if (event.key.keysym.sym == SDLK_d) {
+            is_culling = false;
+            printf("Culling off\n");
+            break;
+        }
+        if (event.key.keysym.sym == SDLK_1) {
+            is_wireframe_dot = true;
+            is_wireframe = false;
+            is_triangle_fill = false;
+            is_wireframe_fill = false;
+            break;
+        }
+        if (event.key.keysym.sym == SDLK_2) {
+ 
+            is_wireframe_dot = false;
+            is_wireframe = true;
+            is_triangle_fill = false;
+            is_wireframe_fill = false;
+            break;
+        }
+        if (event.key.keysym.sym == SDLK_3) {
+            is_wireframe_dot = false;
+            is_wireframe = false;
+            is_triangle_fill = true;
+            is_wireframe_fill = false;
+            break;
+        }
+        if (event.key.keysym.sym == SDLK_4) {
+            is_wireframe_dot = false;
+            is_wireframe = false;
+            is_triangle_fill = false;
+            is_wireframe_fill = true;
+            break;
+        }
+                
+
     }
+    
 }
 
 
@@ -105,32 +154,39 @@ void update(void) {
             transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
 
             transformed_vertex.z += Z_COORD_OFFSET_DEFAULT;
-
             transformed_vertices[j] = transformed_vertex;
 
         }
-        //culling faces
-        vec3_t vector_a = transformed_vertices[0]; /*   A    */
-        vec3_t vector_b = transformed_vertices[1]; /*  / \   */
-        vec3_t vector_c = transformed_vertices[2]; /* C---B  */
+
+        if (is_culling)
+        {
+
+            //culling faces
+            vec3_t vector_a = transformed_vertices[0]; /*   A    */
+            vec3_t vector_b = transformed_vertices[1]; /*  / \   */
+            vec3_t vector_c = transformed_vertices[2]; /* C---B  */
 
 
-        vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
-        vec3_t vector_ac = vec3_subtract(vector_c, vector_a);
-        vec3_normalize(&vector_ab);
-        vec3_normalize(&vector_ac);
+            vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
+            vec3_t vector_ac = vec3_subtract(vector_c, vector_a);
+            vec3_normalize(&vector_ab);
+            vec3_normalize(&vector_ac);
 
 
-        vec3_t normal = cross(vector_ab, vector_ac); // LEFT HANDED COORDINATE SYSTEM
-        vec3_normalize(&normal);
+            vec3_t normal = cross(vector_ab, vector_ac); // LEFT HANDED COORDINATE SYSTEM
+            vec3_normalize(&normal);
 
-        vec3_t camera_ray = vec3_subtract(camera_position, vector_a);
+            vec3_t camera_ray = vec3_subtract(camera_position, vector_a);
 
-        float dot_cam = vec3_dot(camera_ray, normal);
-      
-        if (dot_cam < 0) {
-            continue;
+            float dot_cam = vec3_dot(camera_ray, normal);
+
+            if (dot_cam < 0) {
+                continue;
+            }
+
         }
+
+    
 
 
         //projecting faces
@@ -163,17 +219,75 @@ void render(void) {
     for (int i = 0; i < array_length(triangles_to_render); i++) {
         triangle_t triangle = triangles_to_render[i];
 
-        draw_filled_triangle(
-            triangle.points[0].x,
-            triangle.points[0].y,
-            triangle.points[1].x,
-            triangle.points[1].y,
-            triangle.points[2].x,
-            triangle.points[2].y,
-            0xFFFFFFFF
+        if (is_wireframe_dot)
+        {
+            draw_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFFFFFFFF
             );
 
-    }
+            draw_rect(triangle.points[0].x, triangle.points[0].y, 4, 4, 0xFFFF0000);
+            draw_rect(triangle.points[1].x, triangle.points[1].y, 4, 4, 0xFFFF0000);
+            draw_rect(triangle.points[2].x, triangle.points[2].y, 4, 4, 0xFFFF0000);
+
+
+        }
+        else if (is_wireframe)
+        {
+            draw_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFF00FF00
+            );
+        }
+
+        if (is_triangle_fill)
+        {
+            draw_filled_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFFFFFFFF
+            );
+        }
+
+        if (is_wireframe_fill)
+        {
+            draw_filled_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFFFFFFFF
+            );
+
+            draw_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0x00000000
+            );
+        }
+
+        // render loop end
+        } 
 
 
     array_free(triangles_to_render);
