@@ -87,8 +87,9 @@ void update(void) {
     triangles_to_render = NULL;
 
     previous_frame_time = SDL_GetTicks();
-    mesh.rotation.y += 0.001;
+    mesh.rotation.y += 0.1;
     mesh.rotation.z += 0.01;
+    mesh.rotation.x += 0.1;
 
     for (int i = 0; i < array_length(mesh.faces); i++) {
         triangle_t projected_triangle;
@@ -116,7 +117,6 @@ void update(void) {
         vec3_t vector_a = transformed_vertices[0]; /*   A    */
         vec3_t vector_b = transformed_vertices[1]; /*  / \   */
         vec3_t vector_c = transformed_vertices[2]; /* C---B  */
-
 
 
         vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
@@ -164,22 +164,30 @@ void render(void) {
     
     draw_bg_grid();
 
-    //for (int i = 0; i < array_length(triangles_to_render); i++) {
-    //    triangle_t triangle = triangles_to_render[i];
+    for (int i = 0; i < array_length(triangles_to_render); i++) {
+        triangle_t triangle = triangles_to_render[i];
 
-    //    draw_triangle(
-    //        triangle.points[0].x,
-    //        triangle.points[0].y,
-    //        triangle.points[1].x,
-    //        triangle.points[1].y,
-    //        triangle.points[2].x,
-    //        triangle.points[2].y,
-    //        0xFF00FF00
-    //        );
+        draw_filled_triangle(
+            triangle.points[0].x,
+            triangle.points[0].y,
+            triangle.points[1].x,
+            triangle.points[1].y,
+            triangle.points[2].x,
+            triangle.points[2].y,
+            0xFFFFFFFF
+            );
+        draw_triangle(
+            triangle.points[0].x,
+            triangle.points[0].y,
+            triangle.points[1].x,
+            triangle.points[1].y,
+            triangle.points[2].x,
+            triangle.points[2].y,
+            0x00000000
+        );
 
-    //}
+    }
 
-    draw_filled_triangle(300, 100, 50, 400, 500, 700, 0xFFFFFFFF);
 
     array_free(triangles_to_render);
     
