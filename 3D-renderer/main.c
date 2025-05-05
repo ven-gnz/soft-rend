@@ -30,6 +30,8 @@ const float Z_COORD_OFFSET_DEFAULT = -5;
 
 void setup(void) {
 
+    render_method = RENDER_WIRE;
+    cull_method = CULL_BACKFACE;
     load_obj_mesh("f22.obj");
 
     color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
@@ -62,45 +64,31 @@ void process_input(void) {
         }
             
         if (event.key.keysym.sym == SDLK_c) {
-            is_culling = true;
+            cull_method = CULL_BACKFACE;
             printf("Culling on\n");
             break;
             }
         if (event.key.keysym.sym == SDLK_d) {
-            is_culling = false;
+            cull_method = CULL_NONE;
             printf("Culling off\n");
             break;
         }
         if (event.key.keysym.sym == SDLK_1) {
-            is_wireframe_dot = true;
-            is_wireframe = false;
-            is_triangle_fill = false;
-            is_wireframe_fill = false;
+            render_method = RENDER_WIRE_VERTEX;
             break;
         }
         if (event.key.keysym.sym == SDLK_2) {
- 
-            is_wireframe_dot = false;
-            is_wireframe = true;
-            is_triangle_fill = false;
-            is_wireframe_fill = false;
+            render_method = RENDER_WIRE;
             break;
         }
         if (event.key.keysym.sym == SDLK_3) {
-            is_wireframe_dot = false;
-            is_wireframe = false;
-            is_triangle_fill = true;
-            is_wireframe_fill = false;
+            render_method = RENDER_FILL_TRIANGLE;
             break;
         }
         if (event.key.keysym.sym == SDLK_4) {
-            is_wireframe_dot = false;
-            is_wireframe = false;
-            is_triangle_fill = false;
-            is_wireframe_fill = true;
+            render_method = RENDER_FILL_TRIANGLE_WIRE;
             break;
-        }
-                
+        }            
 
     }
     
@@ -158,7 +146,7 @@ void update(void) {
 
         }
 
-        if (is_culling)
+        if (cull_method == CULL_BACKFACE)
         {
 
             //culling faces
@@ -166,18 +154,15 @@ void update(void) {
             vec3_t vector_b = transformed_vertices[1]; /*  / \   */
             vec3_t vector_c = transformed_vertices[2]; /* C---B  */
 
-
             vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
             vec3_t vector_ac = vec3_subtract(vector_c, vector_a);
             vec3_normalize(&vector_ab);
             vec3_normalize(&vector_ac);
 
-
             vec3_t normal = cross(vector_ab, vector_ac); // LEFT HANDED COORDINATE SYSTEM
             vec3_normalize(&normal);
 
             vec3_t camera_ray = vec3_subtract(camera_position, vector_a);
-
             float dot_cam = vec3_dot(camera_ray, normal);
 
             if (dot_cam < 0) {
@@ -185,8 +170,6 @@ void update(void) {
             }
 
         }
-
-    
 
 
         //projecting faces
@@ -199,7 +182,6 @@ void update(void) {
             projected_point.y += (window_height / 2);
 
             projected_triangle.points[j] = projected_point;
-
 
         }
         array_push(triangles_to_render, projected_triangle);
@@ -219,8 +201,20 @@ void render(void) {
     for (int i = 0; i < array_length(triangles_to_render); i++) {
         triangle_t triangle = triangles_to_render[i];
 
-        if (is_wireframe_dot)
+        switch (render_method)
         {
+        case RENDER_WIRE:
+            draw_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                0xFFFFFFFF
+            );
+            break;
+        case RENDER_WIRE_VERTEX:
             draw_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
@@ -234,24 +228,8 @@ void render(void) {
             draw_rect(triangle.points[0].x, triangle.points[0].y, 4, 4, 0xFFFF0000);
             draw_rect(triangle.points[1].x, triangle.points[1].y, 4, 4, 0xFFFF0000);
             draw_rect(triangle.points[2].x, triangle.points[2].y, 4, 4, 0xFFFF0000);
-
-
-        }
-        else if (is_wireframe)
-        {
-            draw_triangle(
-                triangle.points[0].x,
-                triangle.points[0].y,
-                triangle.points[1].x,
-                triangle.points[1].y,
-                triangle.points[2].x,
-                triangle.points[2].y,
-                0xFF00FF00
-            );
-        }
-
-        if (is_triangle_fill)
-        {
+            break;
+        case RENDER_FILL_TRIANGLE:
             draw_filled_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
@@ -261,10 +239,9 @@ void render(void) {
                 triangle.points[2].y,
                 0xFFFFFFFF
             );
-        }
+            break;
 
-        if (is_wireframe_fill)
-        {
+        case RENDER_FILL_TRIANGLE_WIRE:
             draw_filled_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
@@ -284,6 +261,8 @@ void render(void) {
                 triangle.points[2].y,
                 0x00000000
             );
+            break;
+
         }
 
         // render loop end
