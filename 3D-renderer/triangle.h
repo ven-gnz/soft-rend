@@ -6,10 +6,12 @@ typedef struct {
 	int a;
 	int b;
 	int c;
+	uint32_t color;
 } face_t;
 
 typedef struct {
 	vec2_t points[3];
+	uint32_t color;
 } triangle_t;
 
 void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int mx, int my, uint32_t color);
