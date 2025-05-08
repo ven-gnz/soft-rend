@@ -8,6 +8,7 @@
 #include "mesh.h"
 #include "array.h"
 #include <SDL_filesystem.h>
+#include "matrix.h"
 #define _CRT_SECURE_NO_WARNINGS 1
 
 
@@ -105,8 +106,6 @@ vec2_t project(vec3_t point) {
 }
 
 
-
-
 void update(void) {
     // Wait some time until the reach the target frame time in milliseconds
     int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
@@ -120,14 +119,31 @@ void update(void) {
 
     // Initialize the array of triangles to render
     triangles_to_render = NULL;
-
     mesh.rotation.x += 0.01;
     mesh.rotation.y += 0.01;
     mesh.rotation.z += 0.01;
+    mesh.translation.z = 5.0;
+
+    // Create scale, rotation, and translation matrices that will be used to multiply the mesh vertices
+    mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+    mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+    mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+    mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
+    mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+
+
+
 
     // Loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
     for (int i = 0; i < num_faces; i++) {
+        mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+        mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+        mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+
+        mat4_t world_matrix = mat4_identity();
+        world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+        world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
         face_t mesh_face = mesh.faces[i];
 
         vec3_t face_vertices[3];
@@ -135,18 +151,13 @@ void update(void) {
         face_vertices[1] = mesh.vertices[mesh_face.b - 1];
         face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
-        vec3_t transformed_vertices[3];
+        vec4_t transformed_vertices[3];
 
         // Loop all three vertices of this current face and apply transformations
         for (int j = 0; j < 3; j++) {
-            vec3_t transformed_vertex = face_vertices[j];
 
-            transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
-            transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
-            transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
-
-            // Translate the vertex away from the camera
-            transformed_vertex.z += 5;
+            vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
+            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 
             // Save transformed vertex in the array of transformed vertices
             transformed_vertices[j] = transformed_vertex;
@@ -154,9 +165,9 @@ void update(void) {
 
         // Backface culling test to see if the current face should be projected
         if (cull_method == CULL_BACKFACE) {
-            vec3_t vector_a = transformed_vertices[0]; /*   A   */
-            vec3_t vector_b = transformed_vertices[1]; /*  / \  */
-            vec3_t vector_c = transformed_vertices[2]; /* C---B */
+            vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
+            vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
+            vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
 
             // Get the vector subtraction of B-A and C-A
             vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
@@ -185,7 +196,7 @@ void update(void) {
         // Loop all three vertices to perform projection
         for (int j = 0; j < 3; j++) {
             // Project the current vertex
-            projected_points[j] = project(transformed_vertices[j]);
+            projected_points[j] = project(vec3_from_vec4(transformed_vertices[j]));
 
             // Scale and translate the projected points to the middle of the screen
             projected_points[j].x += (window_width / 2);
