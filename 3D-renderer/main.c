@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -9,21 +10,19 @@
 #include "array.h"
 #include <SDL_filesystem.h>
 #include "matrix.h"
-#define _CRT_SECURE_NO_WARNINGS 1
+#define _CRT_SECURE_NO_WARNINGS 1;
 
 
-cull_method = CULL_BACKFACE;
-render_method = RENDER_WIRE;
+
 bool is_running = false;
 int previous_frame_time = 0;
-float fov_factor = 400;
 
 
 triangle_t* triangles_to_render = NULL;
 
 vec3_t camera_position = { .x = 0,.y = 0, .z = 0 };
-
-const float Z_COORD_OFFSET_DEFAULT = -5;
+mat4_t proj_matrix;
+float fov = M_PI / 3.0;
 
 
 
@@ -42,7 +41,7 @@ void setup(void) {
         window_width,
         window_height
     );
-
+    proj_matrix = mat4_make_perspective(fov,(float)window_height / (float)window_width, 0.1, 100.0);
    
 }
 
@@ -51,62 +50,33 @@ void setup(void) {
 void process_input(void) {
     SDL_Event event;
     SDL_PollEvent(&event);
-
     switch (event.type) {
     case SDL_QUIT:
         is_running = false;
         break;
     case SDL_KEYDOWN:
-        if (event.key.keysym.sym == SDLK_ESCAPE) {
+        if (event.key.keysym.sym == SDLK_ESCAPE)
             is_running = false;
-            break;
-        }
-            
-        if (event.key.keysym.sym == SDLK_c) {
-            cull_method = CULL_BACKFACE;
-            printf("Culling on\n");
-            break;
-            }
-        if (event.key.keysym.sym == SDLK_d) {
-            cull_method = CULL_NONE;
-            printf("Culling off\n");
-            break;
-        }
-        if (event.key.keysym.sym == SDLK_1) {
+        if (event.key.keysym.sym == SDLK_1)
             render_method = RENDER_WIRE_VERTEX;
-           
-        }
-        if (event.key.keysym.sym == SDLK_2) {
+        if (event.key.keysym.sym == SDLK_2)
             render_method = RENDER_WIRE;
-            
-        }
-        if (event.key.keysym.sym == SDLK_3) {
+        if (event.key.keysym.sym == SDLK_3)
             render_method = RENDER_FILL_TRIANGLE;
-            
-        }
-        if (event.key.keysym.sym == SDLK_4) {
+        if (event.key.keysym.sym == SDLK_4)
             render_method = RENDER_FILL_TRIANGLE_WIRE;
-            
-        }
+        if (event.key.keysym.sym == SDLK_c)
+            cull_method = CULL_BACKFACE;
+        if (event.key.keysym.sym == SDLK_d)
+            cull_method = CULL_NONE;
         break;
-
     }
-    
-}
-
-
-vec2_t project(vec3_t point) {
-
-    vec2_t projected_point =
-    {
-        .x = (fov_factor * point.x) / point.z,
-        .y = (fov_factor * point.y) / point.z
-    };
-    return projected_point;
 }
 
 
 void update(void) {
+    
+    
     // Wait some time until the reach the target frame time in milliseconds
     int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
 
@@ -116,12 +86,10 @@ void update(void) {
     }
 
     previous_frame_time = SDL_GetTicks();
-
     // Initialize the array of triangles to render
     triangles_to_render = NULL;
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.01;
-    mesh.rotation.z += 0.01;
+
+    mesh.rotation.x += 0.001;
     mesh.translation.z = 5.0;
 
     // Create scale, rotation, and translation matrices that will be used to multiply the mesh vertices
@@ -131,21 +99,12 @@ void update(void) {
     mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
-
-
-
+    
     // Loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
     for (int i = 0; i < num_faces; i++) {
-        mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-        mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
-        mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
 
-        mat4_t world_matrix = mat4_identity();
-        world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
-        world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
         face_t mesh_face = mesh.faces[i];
-
         vec3_t face_vertices[3];
         face_vertices[0] = mesh.vertices[mesh_face.a - 1];
         face_vertices[1] = mesh.vertices[mesh_face.b - 1];
@@ -157,8 +116,16 @@ void update(void) {
         for (int j = 0; j < 3; j++) {
 
             vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
-            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
+           
+            // calculate transformations
+            mat4_t world_matrix = mat4_identity();
+            world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
+            world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+            
 
+            // apply transformations to vertex
+            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
             // Save transformed vertex in the array of transformed vertices
             transformed_vertices[j] = transformed_vertex;
         }
@@ -170,37 +137,42 @@ void update(void) {
             vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
 
             // Get the vector subtraction of B-A and C-A
-            vec3_t vector_ab = vec3_subtract(vector_b, vector_a);
-            vec3_t vector_ac = vec3_subtract(vector_c, vector_a);
+            vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+            vec3_t vector_ac = vec3_sub(vector_c, vector_a);
             vec3_normalize(&vector_ab);
             vec3_normalize(&vector_ac);
 
             // Compute the face normal (using cross product to find perpendicular)
-            vec3_t normal = cross( vector_ac, vector_ab );
+            vec3_t normal = vec3_cross( vector_ab, vector_ac );
             vec3_normalize(&normal);
 
             // Find the vector between vertex A in the triangle and the camera origin
-            vec3_t camera_ray = vec3_subtract(vector_a, camera_position);
+            vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
             // Calculate how aligned the camera ray is with the face normal (using dot product)
             float dot_normal_camera = vec3_dot(normal, camera_ray);
 
             // Bypass the triangles that are looking away from the camera
-            if (dot_normal_camera <= 0) {
+            if (dot_normal_camera < 0) {
                 continue;
             }
         }
 
-        vec2_t projected_points[3];
+        vec4_t projected_points[3];
 
         // Loop all three vertices to perform projection
         for (int j = 0; j < 3; j++) {
             // Project the current vertex
-            projected_points[j] = project(vec3_from_vec4(transformed_vertices[j]));
+            projected_points[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]);
 
-            // Scale and translate the projected points to the middle of the screen
-            projected_points[j].x += (window_width / 2);
-            projected_points[j].y += (window_height / 2);
+            //scale to view
+            projected_points[j].x *= (window_width / 2.0);
+            projected_points[j].y *= (window_height / 2.0);
+
+            // translate the projected points to the middle of the screen
+            projected_points[j].x += (window_width / 2.0);
+            projected_points[j].y += (window_height / 2.0);
+
         }
 
         // Calculate the average depth for each face based on the vertices after transformation
@@ -240,7 +212,8 @@ void update(void) {
 
 
 void render(void) {
-    
+
+    SDL_RenderClear(renderer);
     draw_bg_grid();
 
     int num_triangles = array_length(triangles_to_render);
@@ -279,7 +252,7 @@ void render(void) {
     array_free(triangles_to_render);
     
     render_color_buffer();
-    clear_color_buffer(0x00000000);
+    clear_color_buffer(0xFF000000);
     SDL_RenderPresent(renderer);
 }
 
