@@ -10,8 +10,8 @@
 #include "array.h"
 #include <SDL_filesystem.h>
 #include "matrix.h"
+#include "light.h"
 #define _CRT_SECURE_NO_WARNINGS 1;
-
 
 
 bool is_running = false;
@@ -24,14 +24,12 @@ vec3_t camera_position = { .x = 0,.y = 0, .z = 0 };
 mat4_t proj_matrix;
 float fov = M_PI / 3.0;
 
-
-
 void setup(void) {
 
     render_method = RENDER_WIRE;
     cull_method = CULL_BACKFACE;
-    load_cube_mesh();
-
+    //load_cube_mesh();
+    load_obj_file_data("f22.obj");
     color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 
     color_buffer_texture = SDL_CreateTexture(
@@ -89,7 +87,7 @@ void update(void) {
     // Initialize the array of triangles to render
     triangles_to_render = NULL;
 
-    mesh.rotation.x += 0.001;
+    mesh.rotation.y += 0.01;
     mesh.translation.z = 5.0;
 
     // Create scale, rotation, and translation matrices that will be used to multiply the mesh vertices
@@ -116,13 +114,13 @@ void update(void) {
         for (int j = 0; j < 3; j++) {
 
             vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
-           
+
             // calculate transformations
             mat4_t world_matrix = mat4_identity();
             world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
-            world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
             world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
-            
+
 
             // apply transformations to vertex
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
@@ -130,21 +128,22 @@ void update(void) {
             transformed_vertices[j] = transformed_vertex;
         }
 
+        vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
+        vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
+        vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
+
+        // Get the vector subtraction of B-A and C-A
+        vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+        vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+        vec3_normalize(&vector_ab);
+        vec3_normalize(&vector_ac);
+
+        // Compute the face normal (using cross product to find perpendicular)
+        vec3_t normal = vec3_cross(vector_ab, vector_ac);
+        vec3_normalize(&normal);
+
         // Backface culling test to see if the current face should be projected
         if (cull_method == CULL_BACKFACE) {
-            vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
-            vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
-            vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
-
-            // Get the vector subtraction of B-A and C-A
-            vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-            vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-            vec3_normalize(&vector_ab);
-            vec3_normalize(&vector_ac);
-
-            // Compute the face normal (using cross product to find perpendicular)
-            vec3_t normal = vec3_cross( vector_ab, vector_ac );
-            vec3_normalize(&normal);
 
             // Find the vector between vertex A in the triangle and the camera origin
             vec3_t camera_ray = vec3_sub(camera_position, vector_a);
@@ -178,15 +177,21 @@ void update(void) {
         // Calculate the average depth for each face based on the vertices after transformation
         float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0;
 
+        //calculate the diffuse intensity between normal and inverse camera ray
+        uint32_t triangle_color = mesh_face.color;
+        float diffuse = -vec3_dot(normal, light.direction);
+        triangle_color = shade_func(mesh_face.color, diffuse);
+
         triangle_t projected_triangle = {
             .points = {
                 { projected_points[0].x, projected_points[0].y },
                 { projected_points[1].x, projected_points[1].y },
                 { projected_points[2].x, projected_points[2].y },
             },
-            .color = mesh_face.color,
-            .avg_depth = avg_depth
+            .color = triangle_color,
+        .avg_depth = avg_depth
         };
+ 
 
         // Save the projected triangle in the array of triangles to render
         array_push(triangles_to_render, projected_triangle);
@@ -206,8 +211,6 @@ void update(void) {
         }
     }
 }
-
-
 
 
 
@@ -261,8 +264,6 @@ void free_res(void) {
     array_free(mesh.faces);
     array_free(mesh.vertices);
 }
-
-
 
 
 int main(int argc, char **argv) {
