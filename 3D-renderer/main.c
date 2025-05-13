@@ -11,6 +11,8 @@
 #include <SDL_filesystem.h>
 #include "matrix.h"
 #include "light.h"
+#include "texture.h"
+#include "triangle.h"
 #define _CRT_SECURE_NO_WARNINGS 1;
 
 
@@ -26,10 +28,12 @@ float fov = M_PI / 3.0;
 
 void setup(void) {
 
+
+
     render_method = RENDER_WIRE;
     cull_method = CULL_BACKFACE;
-    //load_cube_mesh();
-    load_obj_file_data("f22.obj");
+    load_cube_mesh();
+    //load_obj_file_data("f22.obj");
     color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 
     color_buffer_texture = SDL_CreateTexture(
@@ -39,6 +43,10 @@ void setup(void) {
         window_width,
         window_height
     );
+
+    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    texture_width = 64;
+    texture_height = 64;
     proj_matrix = mat4_make_perspective(fov,(float)window_height / (float)window_width, 0.1, 100.0);
    
 }
@@ -63,6 +71,10 @@ void process_input(void) {
             render_method = RENDER_FILL_TRIANGLE;
         if (event.key.keysym.sym == SDLK_4)
             render_method = RENDER_FILL_TRIANGLE_WIRE;
+        if (event.key.keysym.sym == SDLK_5)
+            render_method = RENDER_TEXTURED;
+        if (event.key.keysym.sym == SDLK_6)
+            render_method = RENDER_TEXTURED_WIRE;
         if (event.key.keysym.sym == SDLK_c)
             cull_method = CULL_BACKFACE;
         if (event.key.keysym.sym == SDLK_d)
@@ -191,6 +203,11 @@ void update(void) {
                 { projected_points[1].x, projected_points[1].y },
                 { projected_points[2].x, projected_points[2].y },
             },
+            .texcoords = {
+                {mesh_face.a_uv.u, mesh_face.a_uv.v},
+                {mesh_face.b_uv.u, mesh_face.b_uv.v},
+                {mesh_face.c_uv.u, mesh_face.c_uv.v},
+                },
             .color = triangle_color,
         .avg_depth = avg_depth
         };
@@ -236,12 +253,25 @@ void render(void) {
             );
         }
 
-        // Draw triangle wireframe
-        if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX || render_method == RENDER_FILL_TRIANGLE_WIRE) {
-            draw_triangle(
+        if (render_method == RENDER_TEXTURED || render_method == RENDER_TEXTURED_WIRE) {
+            
+            draw_textured_triangle(
                 triangle.points[0].x, triangle.points[0].y, // vertex A
                 triangle.points[1].x, triangle.points[1].y, // vertex B
                 triangle.points[2].x, triangle.points[2].y, // vertex C
+                triangle.color
+            );
+        }
+
+        // Draw triangle wireframe
+        if (render_method == RENDER_WIRE ||
+            render_method == RENDER_WIRE_VERTEX ||
+            render_method == RENDER_FILL_TRIANGLE_WIRE ||
+            render_method == RENDER_TEXTURED_WIRE) {
+            draw_triangle(
+                triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v // vertex A
+                triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v// vertex B
+                triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v// vertex C
                 0xFFFFFFFF
             );
         }

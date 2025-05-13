@@ -44,7 +44,7 @@ void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
 {
 	// sort vertices by y0 < y1 < y2
-	if (y0 > y1) 
+	if (y0 > y1)
 	{
 		int_swap(&y0, &y1);
 		int_swap(&x0, &x1);
@@ -65,7 +65,7 @@ void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32
 		fill_flat_bottom_triangle(x0, y0, x1, y1, x2, y2, color);
 	}
 	// Edge case 2 : if the original triangle has a flat top, draw only flat top triangle
-	else if (y0 == y1) 
+	else if (y0 == y1)
 	{
 		fill_flat_top_triangle(x0, y0, x1, y1, x2, y2, color);
 	}
@@ -81,6 +81,15 @@ void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32
 	}
 
 }
+
+	void draw_textured_triangle(
+		int x0, int y0, float u0, float v0,
+		int x1, int y1, float u1, float v1,
+		int x2, int y2, float u2, float v2, uint32_t* texture)
+	{
+
+
+	}
 
 
 	
