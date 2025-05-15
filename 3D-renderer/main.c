@@ -99,7 +99,7 @@ void update(void) {
     // Initialize the array of triangles to render
     triangles_to_render = NULL;
 
-    mesh.rotation.y += 0.01;
+    mesh.rotation.y -= 0.01;
     mesh.translation.z = 5.0;
 
     // Create scale, rotation, and translation matrices that will be used to multiply the mesh vertices
@@ -256,10 +256,10 @@ void render(void) {
         if (render_method == RENDER_TEXTURED || render_method == RENDER_TEXTURED_WIRE) {
             
             draw_textured_triangle(
-                triangle.points[0].x, triangle.points[0].y, // vertex A
-                triangle.points[1].x, triangle.points[1].y, // vertex B
-                triangle.points[2].x, triangle.points[2].y, // vertex C
-                triangle.color
+                triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v,// vertex A
+                triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v,// vertex B
+                triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v,
+                mesh_texture // vertex C
             );
         }
 
@@ -269,9 +269,9 @@ void render(void) {
             render_method == RENDER_FILL_TRIANGLE_WIRE ||
             render_method == RENDER_TEXTURED_WIRE) {
             draw_triangle(
-                triangle.points[0].x, triangle.points[0].y, triangle.texcoords[0].u, triangle.texcoords[0].v // vertex A
-                triangle.points[1].x, triangle.points[1].y, triangle.texcoords[1].u, triangle.texcoords[1].v// vertex B
-                triangle.points[2].x, triangle.points[2].y, triangle.texcoords[2].u, triangle.texcoords[2].v// vertex C
+                triangle.points[0].x, triangle.points[0].y,  // vertex A
+                triangle.points[1].x, triangle.points[1].y,  // vertex B
+                triangle.points[2].x, triangle.points[2].y,  // vertex C
                 0xFFFFFFFF
             );
         }
